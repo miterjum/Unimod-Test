@@ -1,0 +1,12 @@
+Library
+Logs
+Temp
+*.csproj
+/.vs/
+/Library/
+/Logs/
+/obj/
+/Temp/
+.vscode
+/UserSettings
+Unimod Test.sln

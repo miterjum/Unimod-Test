@@ -1,0 +1,6 @@
+Mục tiêu:
+- Tạo 3 buttons để spawn 20, 50 và 100 Units bên vùng cờ màu xanh.
+- Khi một Unit được sinh ra thì nó sẽ tìm đường và di chuyển đến vùng cờ màu đỏ.
+- Khi di chuyển các Units phải tránh được các bụi cây và tường gạch.
+- Hiển thị FPS
+- Đính kèm bản build android apk và đường dẫn github project.
