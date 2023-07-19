@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ public class Node2D
         worldPosition = _worldPos;
         GridX = _gridX;
         GridY = _gridY;
+        parent = null;
     }
 
     public int FCost

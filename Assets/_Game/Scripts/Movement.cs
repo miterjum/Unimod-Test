@@ -4,12 +4,18 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-    public float Speed = 1.0f;
+    [SerializeField]
+    private Spider spider;
+
+    [SerializeField]
+    private float Speed = 1.0f;
+
     public Queue<Vector2> mWayPoints = new Queue<Vector2>();
 
     // Start is called before the first frame update
-    public void StartMove()
+    public void StartMove(float speed)
     {
+        Speed = speed;
         StartCoroutine(Coroutine_MoveTo());
     }
 
@@ -18,11 +24,9 @@ public class Movement : MonoBehaviour
         mWayPoints.Enqueue(pt);
     }
 
-    public void SetDestination(Node2D destination)
+    public void SetDestination(Vector2 destination)
     {
-        // we do not have pathfinding yet, so
-        // we just add the destination as a waypoint.
-        AddWayPoint(new Vector2(destination.worldPosition.x, destination.worldPosition.y));
+        AddWayPoint(destination);
     }
 
     public IEnumerator Coroutine_MoveTo()
@@ -33,6 +37,7 @@ public class Movement : MonoBehaviour
             {
                 yield return StartCoroutine(Coroutine_MoveToPoint(mWayPoints.Dequeue(), Speed));
             }
+            spider.IsDone = true;
             yield return null;
         }
     }
@@ -56,6 +61,34 @@ public class Movement : MonoBehaviour
     {
         Vector3 endP = new Vector3(p.x, p.y, transform.position.z);
         float duration = (transform.position - endP).magnitude / speed;
+        ChangeState(p);
         yield return StartCoroutine(Coroutine_MoveOverSeconds(transform.gameObject, endP, duration));
+    }
+
+    void ChangeState(Vector2 p)
+    {
+        var pos = new Vector2(transform.position.x, transform.position.y);
+        if (Mathf.Abs(p.x - pos.x) > Mathf.Abs(p.y - pos.y))
+        {
+            if(p.x - pos.x < 0)
+            {
+                spider.SetState(State.Left);
+            }
+            else
+            {
+                spider.SetState(State.Right);
+            }
+        }
+        else
+        {
+            if (p.y - pos.y < 0)
+            {
+                spider.SetState(State.Down);
+            }
+            else
+            {
+                spider.SetState(State.Up);
+            }
+        }
     }
 }

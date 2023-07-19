@@ -12,6 +12,13 @@ public class Pathfinding2D : MonoBehaviour
     public Movement movement;
 
 
+    public List<Node2D> FindPaths(Node2D startPos, Node2D targetPos)
+    {
+        var path = new List<Node2D>();
+
+        return path;
+    }
+
 
     public void FindPath(Vector3 startPos, Vector3 targetPos)
     {
@@ -78,7 +85,7 @@ public class Pathfinding2D : MonoBehaviour
 
         while (currentNode != startNode)
         {
-            movement.SetDestination(currentNode);
+            
             path.Add(currentNode);
             currentNode = currentNode.parent;
         }
@@ -86,7 +93,6 @@ public class Pathfinding2D : MonoBehaviour
         path.Reverse();
         grid.path = path;
 
-        movement.StartMove();
 
     }
 

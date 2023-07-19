@@ -1,11 +1,14 @@
-﻿using System.Collections;
+﻿using Sirenix.OdinInspector;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class Grid2D : MonoBehaviour
+public class Grid2D : MonoBehaviourSingleton<Grid2D>
 {
-    public Pathfinding2D find;
     public Vector3 gridWorldSize;
     public float nodeRadius;
     public Node2D[,] Grid;
@@ -16,22 +19,24 @@ public class Grid2D : MonoBehaviour
     float nodeDiameter;
     public int gridSizeX, gridSizeY;
 
-    void Awake()
-    {
-        nodeDiameter = nodeRadius * 2;
-        gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
-        gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
-        CreateGrid();
-    }
+    //void Awake()
+    //{
+    //    nodeDiameter = nodeRadius * 2;
+    //    gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
+    //    gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
+    //    CreateGrid();
+    //}
 
-    private void Start()
-    {
-        find.FindPath(find.seeker.position, find.target.position);
+    //private void Start()
+    //{
+    //    find.FindPath(find.seeker.position, find.target.position);
 
-    }
+    //}
 
+    [Button]
     void CreateGrid()
     {
+        nodeDiameter = nodeDiameter = nodeRadius * 2;
         Grid = new Node2D[gridSizeX, gridSizeY];
         worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.up * gridWorldSize.y / 2;
 
@@ -108,4 +113,120 @@ public class Grid2D : MonoBehaviour
             }
         }
     }
+
+    #region Editor
+    [Header("------------Editor------------")]
+    public int key;
+
+    public List<DataPath> allPaths;
+
+    public Transform startPos;
+
+    public Transform endPos;
+
+    [Button]
+    public void FindPath()
+    {
+        var seekerNode = NodeFromWorldPoint(new Vector2(startPos.position.x, startPos.position.y));
+        var targetNode = NodeFromWorldPoint(new Vector2(endPos.position.x, endPos.position.y));
+
+        List<Node2D> openSet = new List<Node2D>();
+        HashSet<Node2D> closedSet = new HashSet<Node2D>();
+        openSet.Add(seekerNode);
+
+        //calculates path for pathfinding
+        while (openSet.Count > 0)
+        {
+
+            //iterates through openSet and finds lowest FCost
+            Node2D node = openSet[0];
+            for (int i = 1; i < openSet.Count; i++)
+            {
+                if (openSet[i].FCost <= node.FCost)
+                {
+                    if (openSet[i].hCost < node.hCost)
+                        node = openSet[i];
+                }
+            }
+
+            openSet.Remove(node);
+            closedSet.Add(node);
+
+            //If target found, retrace path
+            if (node == targetNode)
+            {
+                RetracePath(seekerNode, targetNode);
+                return;
+            }
+
+            //adds neighbor nodes to openSet
+            foreach (Node2D neighbour in GetNeighbors(node))
+            {
+                if (neighbour.obstacle || closedSet.Contains(neighbour))
+                {
+                    continue;
+                }
+
+                int newCostToNeighbour = node.gCost + GetDistance(node, neighbour);
+                if (newCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                {
+                    neighbour.gCost = newCostToNeighbour;
+                    neighbour.hCost = GetDistance(neighbour, targetNode);
+                    neighbour.parent = node;
+
+                    if (!openSet.Contains(neighbour))
+                        openSet.Add(neighbour);
+                }
+            }
+        }
+    }
+
+    [Button]
+    public void ClearAllPath()
+    {
+        allPaths = new List<DataPath>();
+    }
+    void RetracePath(Node2D startNode, Node2D endNode)
+    {
+        List<Vector2> path = new List<Vector2>();
+        Node2D currentNode = endNode;
+        var test = new List<Node2D>();
+        while (currentNode != startNode)
+        {
+            path.Add(currentNode.worldPosition);
+            test.Add(currentNode);
+            currentNode = currentNode.parent;
+        }
+
+        path.Reverse();
+        test.Reverse();
+        this.path = test;
+        allPaths.Add(new DataPath() 
+        {
+            startPos = startNode.worldPosition,
+            endPos = endNode.worldPosition,
+            path = path
+        });
+    }
+    //gets distance between 2 nodes for calculating cost
+    int GetDistance(Node2D nodeA, Node2D nodeB)
+    {
+        int dstX = Mathf.Abs(nodeA.GridX - nodeB.GridX);
+        int dstY = Mathf.Abs(nodeA.GridY - nodeB.GridY);
+
+        if (dstX > dstY)
+            return 14 * dstY + 10 * (dstX - dstY);
+        return 14 * dstX + 10 * (dstY - dstX);
+    }
+
+
+    #endregion
+}
+[Serializable]
+public class DataPath
+{
+    public Vector2 startPos;
+    public Vector2 endPos;
+
+    public List<Vector2> path;
 }
